@@ -68,6 +68,7 @@ private:
     juce::AudioParameterFloat* release{ nullptr };
     juce::AudioParameterFloat* threshold{ nullptr };
     juce::AudioParameterChoice* ratio{ nullptr };
+    juce::AudioParameterBool* bypassed{ nullptr };
 
 
     //==============================================================================
