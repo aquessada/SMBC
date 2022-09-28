@@ -8,7 +8,52 @@
 
 #pragma once
 
+/*
+    DSP ARIANE TEST Roadmap
+    1)figure out audio split in four bands
+    2)create parameters to control where this split happens
+    3)prove that splitting into 4 bands produces no audible artifacts
+    4) create audio parameters for the 4 compressor bands. Need to be inside EACH band
+    5) add 3 remaining compressors
+    6) add abillity to mute/solo/bypass each compressor
+    7) add input and output gain to offset changes in output level
+    8) clean up anything that needs
+    */
+
 #include <JuceHeader.h>
+
+namespace Params
+{
+    enum Names
+    {
+        Low_Crossover_Freq,
+        Low_Mid_Crossover_Freq,
+        Mid_High_Crossover_Freq,
+        High_Crossover_Freq,
+
+        Threshold_Low_Band,
+        Threshold_Low_Mid_Band,
+        Threshold_Mid_High_Band,
+        Threshold_High_Band,
+
+        Attack_Low_Band,
+        Attack_Low_Mid_Band,
+        Attack_Mid_High_Band,
+        Attack_High_Band,
+
+        Release_Low_Band,
+        Release_Low_Mid_Band,
+        Release_Mid_High_Band,
+        Release_High_Band,
+
+        Ratio_Low_Band,
+        Ratio_Low_Mid_Band,
+        Ratio_Mid_High_Band,
+        Ratio_High_Band,
+    };
+}
+
+
 
 struct CompressorBand
 {
