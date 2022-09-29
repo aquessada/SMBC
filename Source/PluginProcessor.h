@@ -189,6 +189,20 @@ private:
 
     CompressorBand compressor; 
 
+    using Filter = juce::dsp::LinkwitzRileyFilter<float>;
+
+    //two instances of filter creation for testing
+        Filter LP, HP;
+
+    //cache  audio parameter for crossover
+        juce::AudioParameterFloat* LowCrossover{ nullptr };
+
+    // 2 (TWO) buffer creation for filters (all audio spectrum to each filter!!!)
+        std::array<juce::AudioBuffer<float>, 2> filterBuffers;
+
+
+
+
 
 
     //==============================================================================

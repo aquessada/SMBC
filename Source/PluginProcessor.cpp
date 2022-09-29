@@ -50,6 +50,13 @@ SimpleMBCompAudioProcessor::SimpleMBCompAudioProcessor()
     };
 
     boolHelper(compressor.bypassed, Names::Bypassed_Low_Band);
+
+    //initializing filters parameters
+    floatHelper(LowCrossover, Names::Low_Crossover_Freq);
+
+    //Configure Filters types
+    LP.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+    HP.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
 }
 
 SimpleMBCompAudioProcessor::~SimpleMBCompAudioProcessor()
@@ -130,6 +137,16 @@ void SimpleMBCompAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
 
     compressor.prepare(spec);
 
+    //PreparetoPlay FILTERS
+    LP.prepare(spec);
+    HP.prepare(spec);
+
+    //prepare the buffers!!
+    for (auto& buffer : filterBuffers)
+    {
+        buffer.setSize(spec.numChannels, samplesPerBlock);
+    }
+
 }
 
 void SimpleMBCompAudioProcessor::releaseResources()
@@ -192,8 +209,58 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
 
     //compressor.process(context);
 
-    compressor.updateCompressorSettings();
-    compressor.process(buffer);
+    //compressor.updateCompressorSettings();
+    //compressor.process(buffer);
+
+    //copying buffers!! the buffer is the audio FROM soundcard
+    for (auto& fb : filterBuffers)
+    {
+        fb = buffer;
+    }
+
+    //Updating filter cutoffs!!
+    auto cutoff = LowCrossover->get();
+    LP.setCutoffFrequency(cutoff);
+    HP.setCutoffFrequency(cutoff);
+
+    //Creating blocks and contexts for the filters. One buffer of audio created TWO output buffers to be processed
+    auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
+    auto fb1Block = juce::dsp::AudioBlock<float>(filterBuffers[1]);
+    auto fb0Ctx = juce::dsp::ProcessContextReplacing<float>(fb0Block);
+    auto fb1Ctx = juce::dsp::ProcessContextReplacing<float>(fb1Block);
+
+    //Now we can process our audio using filters!
+    LP.process(fb0Ctx);
+    HP.process(fb1Ctx);
+
+    //Caching details of the input buffers
+    auto numSamples = buffer.getNumSamples();
+    auto numChannels = buffer.getNumChannels();
+
+    //Cleaning buffers before adding into filters
+    buffer.clear();
+
+    //Each channel of filter buffer needs to be copied back to input buffer
+    auto addFilterBand = [nc = numChannels, ns = numSamples](auto& inputBuffer, const auto& source)  //(goes to, copy from)
+    {
+        for (auto i = 0; i < nc; ++i) //loop thru all the channel of the input buffer and copy from the source buffer into that
+        {
+            for (auto i = 0; i < nc; ++i)
+            {
+                inputBuffer.addFrom(i, 0, source, i, 0, ns);
+            }
+        }
+    };
+
+    //Call helper function with filters buffers
+    addFilterBand(buffer, filterBuffers[0]);
+    addFilterBand(buffer, filterBuffers[1]);
+
+
+
+
+
+
 }
 
 //==============================================================================
@@ -255,6 +322,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleMBCompAudioProcessor::
     layout.add(std::make_unique<AudioParameterChoice>(params.at(Names::Ratio_Low_Band), params.at(Names::Ratio_Low_Band), sa, 3));
 
     layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Bypassed_Low_Band), params.at(Names::Bypassed_Low_Band), false));
+
+    //Creating Filters parameters!!!
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Crossover_Freq), params.at(Names::Low_Crossover_Freq), NormalisableRange<float>(20, 20000, 1, 1), 500));
+
+
 
 
     return layout;
