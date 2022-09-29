@@ -192,18 +192,30 @@ private:
     using Filter = juce::dsp::LinkwitzRileyFilter<float>;
 
     //two instances of filter creation for testing
-        Filter LP, HP;
+    /*    Filter LP, HP;*/
 
     //All-pass filter for testing purposes
-        Filter AP;
-        juce::AudioBuffer<float> apBuffer;
+        //Filter AP;
+        //juce::AudioBuffer<float> apBuffer;
+
+    //lesson12 Multifilter
+    //      fc0  fc1  fc2
+    Filter  LP1, AP2, AP3,
+            HP1, LP2, AP4,
+                 HP2, LP3,
+                 AP5, HP3;
+                    
 
 
     //cache  audio parameter for crossover
-        juce::AudioParameterFloat* LowCrossover{ nullptr };
+      
+        juce::AudioParameterFloat* LowMidCrossover{ nullptr };
+        juce::AudioParameterFloat* MidHighCrossover{ nullptr };
+        juce::AudioParameterFloat* HighCrossover{ nullptr };
 
-    // 2 (TWO) buffer creation for filters (all audio spectrum to each filter!!!)
-        std::array<juce::AudioBuffer<float>, 2> filterBuffers;
+
+    // 4 (FOUR bands) buffer creation for filters (all audio spectrum to each filter!!!)
+        std::array<juce::AudioBuffer<float>, 4> filterBuffers;
 
 
 

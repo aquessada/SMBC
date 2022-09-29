@@ -52,12 +52,21 @@ SimpleMBCompAudioProcessor::SimpleMBCompAudioProcessor()
     boolHelper(compressor.bypassed, Names::Bypassed_Low_Band);
 
     //initializing filters parameters
-    floatHelper(LowCrossover, Names::Low_Crossover_Freq);
+    floatHelper(LowMidCrossover, Names::Low_Mid_Crossover_Freq);
+    floatHelper(MidHighCrossover, Names::Mid_High_Crossover_Freq);
+    floatHelper(HighCrossover, Names::High_Crossover_Freq);
 
     //Configure Filters types
-    LP.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
-    HP.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
-    AP.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    LP1.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+    HP1.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+    LP2.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+    HP2.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+    LP3.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+    HP3.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+    AP2.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    AP3.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    AP4.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    AP5.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
 }
 
 SimpleMBCompAudioProcessor::~SimpleMBCompAudioProcessor()
@@ -139,10 +148,17 @@ void SimpleMBCompAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     compressor.prepare(spec);
 
     //PreparetoPlay FILTERS
-    LP.prepare(spec);
-    HP.prepare(spec);
-    AP.prepare(spec);
-    apBuffer.setSize(spec.numChannels, samplesPerBlock);
+    LP1.prepare(spec);
+    HP1.prepare(spec);
+    LP2.prepare(spec);
+    HP2.prepare(spec);
+    LP3.prepare(spec);
+    HP3.prepare(spec);
+    AP2.prepare(spec);
+    AP3.prepare(spec);
+    AP4.prepare(spec);
+    AP5.prepare(spec);
+
 
     //prepare the buffers!!
     for (auto& buffer : filterBuffers)
@@ -222,10 +238,24 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     }
 
     //Updating filter cutoffs!!
-    auto cutoff = LowCrossover->get();
-    LP.setCutoffFrequency(cutoff);
-    HP.setCutoffFrequency(cutoff);
-    AP.setCutoffFrequency(cutoff);
+    auto LowMidcutoffFreq = LowMidCrossover->get();
+    LP1.setCutoffFrequency(LowMidcutoffFreq);
+    HP1.setCutoffFrequency(LowMidcutoffFreq);
+
+    auto MidHighcutoffFreq = MidHighCrossover->get();
+    LP2.setCutoffFrequency(MidHighcutoffFreq);
+    HP2.setCutoffFrequency(MidHighcutoffFreq);
+
+    auto HighcutoffFreq = HighCrossover->get();
+    LP3.setCutoffFrequency(HighcutoffFreq);
+    HP3.setCutoffFrequency(HighcutoffFreq);
+
+
+    AP2.setCutoffFrequency(LowMidcutoffFreq);
+    AP3.setCutoffFrequency(LowMidcutoffFreq);
+    AP4.setCutoffFrequency(LowMidcutoffFreq);
+    AP5.setCutoffFrequency(LowMidcutoffFreq);
+
 
     //Creating blocks and contexts for the filters. One buffer of audio created TWO output buffers to be processed
     auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
@@ -355,9 +385,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleMBCompAudioProcessor::
     layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Bypassed_Low_Band), params.at(Names::Bypassed_Low_Band), false));
 
     //Creating Filters parameters!!!
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Crossover_Freq), params.at(Names::Low_Crossover_Freq), NormalisableRange<float>(20, 20000, 1, 1), 500));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Mid_Crossover_Freq), params.at(Names::Low_Mid_Crossover_Freq), NormalisableRange<float>(20, 324, 1, 1), 130));
 
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Mid_High_Crossover_Freq), params.at(Names::Mid_High_Crossover_Freq), NormalisableRange<float>(325, 999, 1, 1), 650));
 
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::High_Crossover_Freq), params.at(Names::High_Crossover_Freq), NormalisableRange<float>(1000, 20000, 1, 1), 1800));
 
 
     return layout;
