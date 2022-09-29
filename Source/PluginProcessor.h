@@ -194,6 +194,11 @@ private:
     //two instances of filter creation for testing
         Filter LP, HP;
 
+    //All-pass filter for testing purposes
+        Filter AP;
+        juce::AudioBuffer<float> apBuffer;
+
+
     //cache  audio parameter for crossover
         juce::AudioParameterFloat* LowCrossover{ nullptr };
 

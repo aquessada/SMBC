@@ -57,6 +57,7 @@ SimpleMBCompAudioProcessor::SimpleMBCompAudioProcessor()
     //Configure Filters types
     LP.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
     HP.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+    AP.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
 }
 
 SimpleMBCompAudioProcessor::~SimpleMBCompAudioProcessor()
@@ -140,6 +141,8 @@ void SimpleMBCompAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     //PreparetoPlay FILTERS
     LP.prepare(spec);
     HP.prepare(spec);
+    AP.prepare(spec);
+    apBuffer.setSize(spec.numChannels, samplesPerBlock);
 
     //prepare the buffers!!
     for (auto& buffer : filterBuffers)
@@ -222,10 +225,12 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     auto cutoff = LowCrossover->get();
     LP.setCutoffFrequency(cutoff);
     HP.setCutoffFrequency(cutoff);
+    AP.setCutoffFrequency(cutoff);
 
     //Creating blocks and contexts for the filters. One buffer of audio created TWO output buffers to be processed
     auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
     auto fb1Block = juce::dsp::AudioBlock<float>(filterBuffers[1]);
+
     auto fb0Ctx = juce::dsp::ProcessContextReplacing<float>(fb0Block);
     auto fb1Ctx = juce::dsp::ProcessContextReplacing<float>(fb1Block);
 
@@ -236,6 +241,17 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     //Caching details of the input buffers
     auto numSamples = buffer.getNumSamples();
     auto numChannels = buffer.getNumChannels();
+
+    //IF the compressor is bypassed dont clear, leave the buffer / testing
+    //if (compressor.bypassed->get())
+    //    return;
+
+
+    // Copy input buffer to Allpass buffer
+    apBuffer = buffer;
+    auto apBlock = juce::dsp::AudioBlock<float>(apBuffer);
+    auto apContext = juce::dsp::ProcessContextReplacing<float>(apBlock);
+    AP.process(apContext);
 
     //Cleaning buffers before adding into filters
     buffer.clear();
@@ -252,15 +268,30 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
         }
     };
 
-    //Call helper function with filters buffers
+    //Bypass logic for testing
+    //if (!compressor.bypassed->get())
+    //{
+    //    //Call helper function with filters buffers
+    //    addFilterBand(buffer, filterBuffers[0]);
+    //    addFilterBand(buffer, filterBuffers[1]);
+    //}
+    //else
+    //{
+    //    addFilterBand(buffer, apBuffer);
+    //}
+
     addFilterBand(buffer, filterBuffers[0]);
     addFilterBand(buffer, filterBuffers[1]);
 
-
-
-
-
-
+    //Testing filter linearity inverting the ALLpass filter to zero the audio
+    if (compressor.bypassed->get())
+    {
+        for (auto ch = 0; ch < numChannels; ++ch)
+        {
+            juce::FloatVectorOperations::multiply(apBuffer.getWritePointer(ch), -1.f, numSamples);
+       }
+        addFilterBand(buffer, apBuffer);
+    }
 }
 
 //==============================================================================
