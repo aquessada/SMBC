@@ -25,7 +25,9 @@
 namespace Params
 {
 enum Names
-{
+{       
+        Bass_Crossover_Freq,
+        Master_Crossover_Freq,
         Low_Crossover_Freq,
         Low_Mid_Crossover_Freq,
         Mid_High_Crossover_Freq,
@@ -61,6 +63,8 @@ inline const std::map<Names, juce::String>& GetParams()
 {
     static std::map<Names, juce::String> params = {
 
+    {Bass_Crossover_Freq,"Bass Crossover Freq"},
+    {Master_Crossover_Freq,"Master Crossover Freq"},        
     {Low_Crossover_Freq,"Low Crossover Freq"},
     {Low_Mid_Crossover_Freq, "Low Mid Crossover Freq"},
     {Mid_High_Crossover_Freq, "Mid High Crossover Freq"},
@@ -204,10 +208,10 @@ private:
     //        HP1, LP2,
     //             HP2;
     //      fc0  fc1  fc2
-    Filter  LP1, AP2, AP3,
-            HP1, LP2, AP4,
-                 HP2, LP3,
-                 AP5, HP3,
+    Filter  LP1, LP2, LP3,
+            HP1, HP2, HP3,
+                 AP2, AP3,
+                 AP4, AP5,
                       AP6;
     
     //Creating inverted allpass to each stage for testing
@@ -215,12 +219,11 @@ private:
 
     // Creating buffer for these filters
     juce::AudioBuffer<float> invAPBuffer;
-
-                    
-
-
+                
     //cache  audio parameter for crossover
-      
+        juce::AudioParameterFloat* BassCrossover{ nullptr };
+        juce::AudioParameterFloat* MasterCrossover{ nullptr };
+        juce::AudioParameterFloat* LowCrossover{ nullptr };
         juce::AudioParameterFloat* LowMidCrossover{ nullptr };
         juce::AudioParameterFloat* MidHighCrossover{ nullptr };
         juce::AudioParameterFloat* HighCrossover{ nullptr };
@@ -231,7 +234,7 @@ private:
 
 
     // 4 (FOUR bands) buffer creation for filters (all audio spectrum to each filter!!!)
-        std::array<juce::AudioBuffer<float>,4> filterBuffers; 
+        std::array<juce::AudioBuffer<float>,6> filterBuffers; 
 
 
 
