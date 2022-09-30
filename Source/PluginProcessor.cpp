@@ -70,6 +70,12 @@ SimpleMBCompAudioProcessor::SimpleMBCompAudioProcessor()
     AP3.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
     AP4.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
     AP5.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    AP6.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+
+    invAP1.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    invAP2.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    invAP3.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+
 }
 
 SimpleMBCompAudioProcessor::~SimpleMBCompAudioProcessor()
@@ -164,14 +170,19 @@ void SimpleMBCompAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     AP3.prepare(spec);
     AP4.prepare(spec);
     AP5.prepare(spec);
+    AP6.prepare(spec);
 
+    invAP1.prepare(spec);
+    invAP2.prepare(spec);
+    invAP3.prepare(spec);
 
+    invAPBuffer.setSize(spec.numChannels, samplesPerBlock);
+ 
     //prepare the buffers!!
     for (auto& buffer : filterBuffers)
     {
         buffer.setSize(spec.numChannels, samplesPerBlock);
     }
-
 }
 
 void SimpleMBCompAudioProcessor::releaseResources()
@@ -243,22 +254,38 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
         fb = buffer;
     }
 
+    //Preparing the inverted testing filters
+    invAPBuffer = buffer;
+
+
     //Updating filter cutoffs!!
     auto LowMidcutoffFreq = LowMidCrossover->get();
     LP1.setCutoffFrequency(LowMidcutoffFreq);
     HP1.setCutoffFrequency(LowMidcutoffFreq);
-    //AP2.setCutoffFrequency(LowMidcutoffFreq);
+   /* AP2.setCutoffFrequency(LowMidcutoffFreq);
+    AP3.setCutoffFrequency(LowMidcutoffFreq);*/
+    //AP5.setCutoffFrequency(LowMidcutoffFreq);
+    //AP4.setCutoffFrequency(LowMidcutoffFreq);
+    invAP1.setCutoffFrequency(LowMidcutoffFreq);
 
     auto MidHighcutoffFreq = MidHighCrossover->get();
-    AP2.setCutoffFrequency(MidHighcutoffFreq); 
+    AP2.setCutoffFrequency(MidHighcutoffFreq);
+    AP3.setCutoffFrequency(MidHighcutoffFreq);
+    AP4.setCutoffFrequency(MidHighcutoffFreq);
+    AP5.setCutoffFrequency(MidHighcutoffFreq);  
+    AP6.setCutoffFrequency(MidHighcutoffFreq);
     LP2.setCutoffFrequency(MidHighcutoffFreq);
     HP2.setCutoffFrequency(MidHighcutoffFreq);
+    invAP2.setCutoffFrequency(MidHighcutoffFreq);
+
     
     auto HighcutoffFreq = HighCrossover->get();
-    AP3.setCutoffFrequency(HighcutoffFreq);
+   // AP3.setCutoffFrequency(HighcutoffFreq);
+   // AP5.setCutoffFrequency(HighcutoffFreq);
     LP3.setCutoffFrequency(HighcutoffFreq);
     HP3.setCutoffFrequency(HighcutoffFreq);
-    AP4.setCutoffFrequency(HighcutoffFreq);  //after this we need to create filters biffers and context to work  
+    
+    invAP3.setCutoffFrequency(HighcutoffFreq); //after this we need to create filters biffers and context to work  
 
     //Creating blocks and contexts for the filters. One buffer of audio created FOUR BAND output buffers to be processed
     auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
@@ -284,11 +311,11 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     //HP2.process(fb2Ctx);
 
     ////Band1 - Low
-    AP2.process(fb0Ctx);
-    AP3.process(fb0Ctx);
     LP1.process(fb0Ctx);
-
-
+    AP2.process(fb0Ctx);
+    AP4.process(fb0Ctx);
+    
+    
     ////we needt o filter HP1 to be able to split it to other bands
     HP1.process(fb1Ctx);
     
@@ -297,25 +324,38 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     filterBuffers[3] = filterBuffers[1];
 
     //Band2 - LowMid
-    AP4.process(fb1Ctx);
-    LP2.process(fb1Ctx); 
+   // AP4.process(fb1Ctx); 
+    LP2.process(fb1Ctx);
+    AP5.process(fb1Ctx);
     
   
     ////Band3 - MidHigh
+    //AP3.process(fb2Ctx);
     HP2.process(fb2Ctx);
     LP3.process(fb2Ctx);
 
     ////Band4 - High
-    AP5.process(fb1Ctx);
+    AP3.process(fb3Ctx);
+    AP6.process(fb3Ctx);
     HP3.process(fb3Ctx);
     
+    
+   
+    
+    
 
+    auto invAPBlock = juce::dsp::AudioBlock<float>(invAPBuffer);
+    auto invAPCtx = juce::dsp::ProcessContextReplacing<float>(invAPBlock);
+
+    //invAP1.process(invAPCtx);
+    //invAP2.process(invAPCtx);
+    //invAP3.process(invAPCtx);
 
     //Caching details of the input buffers
     auto numSamples = buffer.getNumSamples();
     auto numChannels = buffer.getNumChannels();
 
-    //IF the compressor is bypassed dont clear, leave the buffer / testing
+    ////IF the compressor is bypassed dont clear, leave the buffer / testing
     if (compressor.bypassed->get())
         return;
 
@@ -338,13 +378,13 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     addFilterBand(buffer, filterBuffers[3]);
 
     //Testing filter linearity inverting the ALLpass filter to zero the audio
-    /*if (compressor.bypassed->get())
+   /* if (compressor.bypassed->get())
     {
         for (auto ch = 0; ch < numChannels; ++ch)
         {
-            juce::FloatVectorOperations::multiply(apBuffer.getWritePointer(ch), -1.f, numSamples);
+            juce::FloatVectorOperations::multiply(invAPBuffer.getWritePointer(ch), -1.f, numSamples);
        }
-        addFilterBand(buffer, apBuffer);
+        addFilterBand(buffer, invAPBuffer);
     }*/
 }
 
@@ -425,9 +465,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleMBCompAudioProcessor::
     //                                                    8000));
 
 
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Mid_Crossover_Freq), params.at(Names::Low_Mid_Crossover_Freq), NormalisableRange<float>(20, 324, 1, 1), 130));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Mid_Crossover_Freq), params.at(Names::Low_Mid_Crossover_Freq), NormalisableRange<float>(20, 325, 1, 1), 130));
 
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Mid_High_Crossover_Freq), params.at(Names::Mid_High_Crossover_Freq), NormalisableRange<float>(325, 999, 1, 1), 650));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Mid_High_Crossover_Freq), params.at(Names::Mid_High_Crossover_Freq), NormalisableRange<float>(325, 1000, 1, 1), 650));
 
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::High_Crossover_Freq), params.at(Names::High_Crossover_Freq), NormalisableRange<float>(1000, 20000, 1, 1), 1800));
 

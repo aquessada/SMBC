@@ -207,7 +207,15 @@ private:
     Filter  LP1, AP2, AP3,
             HP1, LP2, AP4,
                  HP2, LP3,
-                 AP5, HP3;
+                 AP5, HP3,
+                      AP6;
+    
+    //Creating inverted allpass to each stage for testing
+    Filter invAP1, invAP2, invAP3;
+
+    // Creating buffer for these filters
+    juce::AudioBuffer<float> invAPBuffer;
+
                     
 
 
@@ -223,7 +231,7 @@ private:
 
 
     // 4 (FOUR bands) buffer creation for filters (all audio spectrum to each filter!!!)
-        std::array<juce::AudioBuffer<float>,4> filterBuffers; //4
+        std::array<juce::AudioBuffer<float>,4> filterBuffers; 
 
 
 
