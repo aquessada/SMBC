@@ -199,6 +199,10 @@ private:
         //juce::AudioBuffer<float> apBuffer;
 
     //lesson12 Multifilter
+    // //      fc0  fc1
+    //Filter  LP1, AP2,
+    //        HP1, LP2,
+    //             HP2;
     //      fc0  fc1  fc2
     Filter  LP1, AP2, AP3,
             HP1, LP2, AP4,
@@ -213,9 +217,13 @@ private:
         juce::AudioParameterFloat* MidHighCrossover{ nullptr };
         juce::AudioParameterFloat* HighCrossover{ nullptr };
 
+        //juce::AudioParameterFloat* LowMidCrossover{ nullptr };
+        //juce::AudioParameterFloat* MidHighCrossover{ nullptr };
+
+
 
     // 4 (FOUR bands) buffer creation for filters (all audio spectrum to each filter!!!)
-        std::array<juce::AudioBuffer<float>, 4> filterBuffers;
+        std::array<juce::AudioBuffer<float>,4> filterBuffers; //4
 
 
 
