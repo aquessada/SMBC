@@ -72,14 +72,13 @@ SimpleMBCompAudioProcessor::SimpleMBCompAudioProcessor()
     AP2.setType(juce::dsp::LinkwitzRileyFilterType::allpass);   
     AP3.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
 
+    AP1.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
     AP4.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
     AP5.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
-    AP6.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
 
     invAP1.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
-    invAP2.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
-    invAP3.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
-
+    invAP4.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    invAP5.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
 }
 
 SimpleMBCompAudioProcessor::~SimpleMBCompAudioProcessor()
@@ -175,11 +174,10 @@ void SimpleMBCompAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
 
     AP4.prepare(spec);
     AP5.prepare(spec);
-    AP6.prepare(spec);
-
+    
     invAP1.prepare(spec);
-    invAP2.prepare(spec);
-    invAP3.prepare(spec);
+    invAP4.prepare(spec);
+    invAP5.prepare(spec);
 
     invAPBuffer.setSize(spec.numChannels, samplesPerBlock);
  
@@ -267,37 +265,41 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     auto BasscutoffFreq = BassCrossover->get();
     LP1.setCutoffFrequency(BasscutoffFreq);
     HP1.setCutoffFrequency(BasscutoffFreq);
-//  HP2.setCutoffFrequency(MastercutoffFreq)
+    invAP1.setCutoffFrequency(BasscutoffFreq);
+  
     
 
     auto MastercutoffFreq = MasterCrossover->get();
+    invAP4.setCutoffFrequency(MastercutoffFreq);
+
     
   //  LP2.setCutoffFrequency(MastercutoffFreq);
   //  HP2.setCutoffFrequency(MastercutoffFreq);
 
     auto LowcutoffFreq = LowCrossover->get();
+    AP2.setCutoffFrequency(LowcutoffFreq);
     LP2.setCutoffFrequency(LowcutoffFreq);
     HP2.setCutoffFrequency(LowcutoffFreq);
+    //invAP1.setCutoffFrequency(LowcutoffFreq);
     //LP1.setCutoffFrequency(LowcutoffFreq);
     //HP1.setCutoffFrequency(LowcutoffFreq);
 
 
    auto LowMidcutoffFreq = LowMidCrossover->get();
+  
+   //HP2.setCutoffFrequency(LowMidcutoffFreq);
    // LP1.setCutoffFrequency(LowMidcutoffFreq);
    // HP1.setCutoffFrequency(LowMidcutoffFreq);
-    //AP2.setCutoffFrequency(LowMidcutoffFreq);
-
-
-   ///* AP2.setCutoffFrequency(LowMidcutoffFreq);
-   AP3.setCutoffFrequency(LowMidcutoffFreq);
+   //AP2.setCutoffFrequency(LowMidcutoffFreq);
+   //AP3.setCutoffFrequency(LowMidcutoffFreq);
    // //AP5.setCutoffFrequency(LowMidcutoffFreq);
    // //AP4.setCutoffFrequency(LowMidcutoffFreq);
    // // invAP1.setCutoffFrequency(LowMidcutoffFreq);
 
    auto MidHighcutoffFreq = MidHighCrossover->get();
-   // LP2.setCutoffFrequency(MidHighcutoffFreq);
-   // HP2.setCutoffFrequency(MidHighcutoffFreq);
-   AP2.setCutoffFrequency(MidHighcutoffFreq);
+    //LP3.setCutoffFrequency(MidHighcutoffFreq);
+    //HP3.setCutoffFrequency(MidHighcutoffFreq);
+   //AP3.setCutoffFrequency(MidHighcutoffFreq);
    // //AP3.setCutoffFrequency(MidHighcutoffFreq);
    // //AP4.setCutoffFrequency(MidHighcutoffFreq);
    // //AP5.setCutoffFrequency(MidHighcutoffFreq);
@@ -305,9 +307,13 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
    // //invAP2.setCutoffFrequency(MidHighcutoffFreq);
 
    // 
-   // auto HighcutoffFreq = HighCrossover->get();
+   auto HighcutoffFreq = HighCrossover->get();
+   AP3.setCutoffFrequency(HighcutoffFreq);
+   LP3.setCutoffFrequency(HighcutoffFreq);
+   HP3.setCutoffFrequency(HighcutoffFreq);
+   
    //// AP3.setCutoffFrequency(HighcutoffFreq);
-   //// AP5.setCutoffFrequency(HighcutoffFreq);
+   //invAP4.setCutoffFrequency(HighcutoffFreq);
    // LP3.setCutoffFrequency(HighcutoffFreq);
    // HP3.setCutoffFrequency(HighcutoffFreq);
     
@@ -327,8 +333,6 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     auto fb3Ctx = juce::dsp::ProcessContextReplacing<float>(fb3Block);
     auto fb4Ctx = juce::dsp::ProcessContextReplacing<float>(fb4Block);
     auto fb5Ctx = juce::dsp::ProcessContextReplacing<float>(fb5Block);
-
-
 
     //Now we can process our audio using filters!
 
@@ -398,8 +402,8 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     auto invAPBlock = juce::dsp::AudioBlock<float>(invAPBuffer);
     auto invAPCtx = juce::dsp::ProcessContextReplacing<float>(invAPBlock);
 
-    //invAP1.process(invAPCtx);
-    //invAP2.process(invAPCtx);
+    invAP1.process(invAPCtx);
+    invAP4.process(invAPCtx);
     //invAP3.process(invAPCtx);
 
     //Caching details of the input buffers
@@ -407,8 +411,8 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     auto numChannels = buffer.getNumChannels();
 
     ////IF the compressor is bypassed dont clear, leave the buffer / testing
-    if (compressor.bypassed->get())
-        return;
+    //if (compressor.bypassed->get())
+    //    return;
 
     //Cleaning buffers before adding into filters
     buffer.clear();
@@ -423,24 +427,24 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     };
 
     // filters summing  
-     //addFilterBand(buffer, filterBuffers[0]); //BASS
-     //addFilterBand(buffer, filterBuffers[1]); //MASTER
+     addFilterBand(buffer, filterBuffers[0]); //BASS
+     addFilterBand(buffer, filterBuffers[1]); //MASTER
 
-     addFilterBand(buffer, filterBuffers[2]);  //LOW
-     addFilterBand(buffer, filterBuffers[4]); //MIDLOW
-     addFilterBand(buffer, filterBuffers[3]);  //MIDHIGH
-     addFilterBand(buffer, filterBuffers[5]); //HIGH
+    //addFilterBand(buffer, filterBuffers[2]);  //LOW
+    //addFilterBand(buffer, filterBuffers[4]); //MIDLOW
+    // addFilterBand(buffer, filterBuffers[3]);  //MIDHIGH
+    // addFilterBand(buffer, filterBuffers[5]); //HIGH
     //addFilterBand(buffer, filterBuffers[3]);
 
     //Testing filter linearity inverting the ALLpass filter to zero the audio
-   /* if (compressor.bypassed->get())
+    if (compressor.bypassed->get())
     {
         for (auto ch = 0; ch < numChannels; ++ch)
         {
             juce::FloatVectorOperations::multiply(invAPBuffer.getWritePointer(ch), -1.f, numSamples);
        }
         addFilterBand(buffer, invAPBuffer);
-    }*/
+    }
 }
 
 //==============================================================================

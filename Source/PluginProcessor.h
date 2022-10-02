@@ -211,11 +211,11 @@ private:
     Filter  LP1, LP2, LP3,
             HP1, HP2, HP3,
                  AP2, AP3,
-                 AP4, AP5,
-                      AP6;
+                 AP1, AP4,
+                      AP5;
     
     //Creating inverted allpass to each stage for testing
-    Filter invAP1, invAP2, invAP3;
+    Filter invAP1, invAP4, invAP5;
 
     // Creating buffer for these filters
     juce::AudioBuffer<float> invAPBuffer;
