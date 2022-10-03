@@ -10,10 +10,10 @@
 
 /*
     DSP ARIANE TEST Roadmap
-    1)figure out audio split in four bands
-    2)create parameters to control where this split happens
-    3)prove that splitting into 4 bands produces no audible artifacts
-    4) create audio parameters for the 4 compressor bands. Need to be inside EACH band
+    1)figure out audio split in four bands > DONE
+    2)create parameters to control where this split happens > DONE
+    3)prove that splitting into 4 bands produces no audible artifacts > DONE
+    4) create audio parameters for the 4 compressor bands. Need to be inside EACH band  >DONE
     5) add 3 remaining compressors
     6) add abillity to mute/solo/bypass each compressor
     7) add input and output gain to offset changes in output level
@@ -191,7 +191,12 @@ private:
     //juce::AudioParameterChoice* ratio{ nullptr };
     //juce::AudioParameterBool* bypassed{ nullptr };
 
-    CompressorBand compressor; 
+    std::array<CompressorBand, 4> compressors; 
+    CompressorBand& LowBandComp = compressors[0];
+    CompressorBand& LowMidBandComp = compressors[1];
+    CompressorBand& MidHighBandComp = compressors[2];
+    CompressorBand& HighBandComp = compressors[3];
+
 
     using Filter = juce::dsp::LinkwitzRileyFilter<float>;
 
@@ -234,7 +239,7 @@ private:
 
 
     // 4 (FOUR bands) buffer creation for filters (all audio spectrum to each filter!!!)
-        std::array<juce::AudioBuffer<float>,6> filterBuffers; 
+        std::array<juce::AudioBuffer<float>,10> filterBuffers; 
 
 
 
