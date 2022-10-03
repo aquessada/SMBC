@@ -69,6 +69,16 @@ SimpleMBCompAudioProcessor::SimpleMBCompAudioProcessor()
     boolHelper(MidHighBandComp.bypassed, Names::Bypassed_Mid_High_Band);
     boolHelper(HighBandComp.bypassed, Names::Bypassed_High_Band);
 
+    boolHelper(LowBandComp.mute, Names::Mute_Low_Band);
+    boolHelper(LowMidBandComp.mute, Names::Mute_Low_Mid_Band);
+    boolHelper(MidHighBandComp.mute, Names::Mute_Mid_High_Band);
+    boolHelper(HighBandComp.mute, Names::Mute_High_Band);
+
+    boolHelper(LowBandComp.solo, Names::Solo_Low_Band);
+    boolHelper(LowMidBandComp.solo, Names::Solo_Low_Mid_Band);
+    boolHelper(MidHighBandComp.solo, Names::Solo_Mid_High_Band);
+    boolHelper(HighBandComp.solo, Names::Solo_High_Band);
+
 
     //initializing filters parameters
     floatHelper(BassCrossover, Names::Bass_Crossover_Freq);
@@ -466,15 +476,27 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
         }
     };
 
+    auto bandsAreSoloed = false;
+    for (auto& comp : compressors)
+    {
+        if (comp.solo->get())
+        {
+            bandsAreSoloed = true;
+            break;
+        }
+    }
+
     // filters summing  
      //addFilterBand(buffer, filterBuffers[0]); //BASS
      //addFilterBand(buffer, filterBuffers[1]); //MASTER
-
     addFilterBand(buffer, filterBuffers[2]);  //LOW
     addFilterBand(buffer, filterBuffers[4]); //MIDLOW
     addFilterBand(buffer, filterBuffers[3]);  //MIDHIGH
     addFilterBand(buffer, filterBuffers[5]); //HIGH
     //addFilterBand(buffer, filterBuffers[3]);
+
+    if (bandsAreSoloed)
+    {for(size_t i=0) }
 
     //Testing filter linearity inverting the ALLpass filter to zero the audio
    /* if (compressor.bypassed->get())
@@ -563,21 +585,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleMBCompAudioProcessor::
     layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Bypassed_Mid_High_Band), params.at(Names::Bypassed_Mid_High_Band), false));
     layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Bypassed_High_Band), params.at(Names::Bypassed_High_Band), false));
 
-    //Creating Filters parameters!!!
-    //    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Mid_Crossover_Freq),
-    //                                                 params.at(Names::Low_Mid_Crossover_Freq),
-    //                                                 NormalisableRange<float>(20, 999, 1, 1),
-    //                                                 400));
-    //
-    //layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Mid_High_Crossover_Freq),
-    //                                                 params.at(Names::Mid_High_Crossover_Freq),
-    //                                                 NormalisableRange<float>(1000, 6299, 1, 1),
-    //                                                 2000));
+    layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Mute_Low_Band), params.at(Names::Mute_Low_Band), false));
+    layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Mute_Low_Mid_Band), params.at(Names::Mute_Low_Mid_Band), false));
+    layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Mute_Mid_High_Band), params.at(Names::Mute_Mid_High_Band), false));
+    layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Mute_High_Band), params.at(Names::Mute_High_Band), false));
 
-    //layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::High_Crossover_Freq),
-    //                                                params.at(Names::High_Crossover_Freq),
-    //                                                 NormalisableRange<float>(6300, 20000, 1, 1),
-    //                                                    8000));
+    layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Solo_Low_Band), params.at(Names::Solo_Low_Band), false));
+    layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Solo_Low_Mid_Band), params.at(Names::Solo_Low_Mid_Band), false));
+    layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Solo_Mid_High_Band), params.at(Names::Solo_Mid_High_Band), false));
+    layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Solo_High_Band), params.at(Names::Solo_High_Band), false));
 
 
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Bass_Crossover_Freq), params.at(Names::Bass_Crossover_Freq), NormalisableRange<float>(20, 650, 1, 1), 650));
