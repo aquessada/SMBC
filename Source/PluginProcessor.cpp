@@ -265,12 +265,13 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     auto BasscutoffFreq = BassCrossover->get();
     LP1.setCutoffFrequency(BasscutoffFreq);
     HP1.setCutoffFrequency(BasscutoffFreq);
-    invAP1.setCutoffFrequency(BasscutoffFreq);
+    invAP1.setCutoffFrequency(BasscutoffFreq);  // FOr testing first crossover
+    invAP4.setCutoffFrequency(BasscutoffFreq);
   
     
 
     auto MastercutoffFreq = MasterCrossover->get();
-    invAP4.setCutoffFrequency(MastercutoffFreq);
+    //invAP4.setCutoffFrequency(MastercutoffFreq);
 
     
   //  LP2.setCutoffFrequency(MastercutoffFreq);
@@ -280,6 +281,8 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     AP2.setCutoffFrequency(LowcutoffFreq);
     LP2.setCutoffFrequency(LowcutoffFreq);
     HP2.setCutoffFrequency(LowcutoffFreq);
+    //invAP1.setCutoffFrequency(LowcutoffFreq);  // FOr testing first crossover
+    //invAP4.setCutoffFrequency(LowcutoffFreq);
     //invAP1.setCutoffFrequency(LowcutoffFreq);
     //LP1.setCutoffFrequency(LowcutoffFreq);
     //HP1.setCutoffFrequency(LowcutoffFreq);
@@ -411,8 +414,8 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     auto numChannels = buffer.getNumChannels();
 
     ////IF the compressor is bypassed dont clear, leave the buffer / testing
-    //if (compressor.bypassed->get())
-    //    return;
+    if (compressor.bypassed->get())
+        return;
 
     //Cleaning buffers before adding into filters
     buffer.clear();
@@ -427,24 +430,24 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     };
 
     // filters summing  
-     addFilterBand(buffer, filterBuffers[0]); //BASS
-     addFilterBand(buffer, filterBuffers[1]); //MASTER
+     //addFilterBand(buffer, filterBuffers[0]); //BASS
+     //addFilterBand(buffer, filterBuffers[1]); //MASTER
 
-    //addFilterBand(buffer, filterBuffers[2]);  //LOW
-    //addFilterBand(buffer, filterBuffers[4]); //MIDLOW
-    // addFilterBand(buffer, filterBuffers[3]);  //MIDHIGH
-    // addFilterBand(buffer, filterBuffers[5]); //HIGH
+    addFilterBand(buffer, filterBuffers[2]);  //LOW
+    addFilterBand(buffer, filterBuffers[4]); //MIDLOW
+    addFilterBand(buffer, filterBuffers[3]);  //MIDHIGH
+    addFilterBand(buffer, filterBuffers[5]); //HIGH
     //addFilterBand(buffer, filterBuffers[3]);
 
     //Testing filter linearity inverting the ALLpass filter to zero the audio
-    if (compressor.bypassed->get())
+   /* if (compressor.bypassed->get())
     {
         for (auto ch = 0; ch < numChannels; ++ch)
         {
             juce::FloatVectorOperations::multiply(invAPBuffer.getWritePointer(ch), -1.f, numSamples);
        }
         addFilterBand(buffer, invAPBuffer);
-    }
+    }*/
 }
 
 //==============================================================================
