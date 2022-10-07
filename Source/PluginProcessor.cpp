@@ -88,6 +88,10 @@ SimpleMBCompAudioProcessor::SimpleMBCompAudioProcessor()
     floatHelper(MidHighCrossover, Names::Mid_High_Crossover_Freq);
     floatHelper(HighCrossover, Names::High_Crossover_Freq);
 
+    //Configure and initialize Gains
+    floatHelper(inputGainParam, Names::Gain_In);
+    floatHelper(outputGainParam, Names::Gain_Out);
+
     //Configure Filters types
     LP1.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
     HP1.setType(juce::dsp::LinkwitzRileyFilterType::highpass); 
@@ -214,6 +218,15 @@ void SimpleMBCompAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     invAP5.prepare(spec);
 
     invAPBuffer.setSize(spec.numChannels, samplesPerBlock);
+
+    //prepare the gains
+    inputGain.prepare(spec);
+    outputGain.prepare(spec);
+
+    inputGain.setRampDurationSeconds(0.05); //50ms
+    outputGain.setRampDurationSeconds(0.05); //50ms
+
+
  
     //prepare the buffers!!
     for (auto& buffer : filterBuffers)
@@ -266,26 +279,20 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     // This is here to avoid people getting screaming feedback
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
+
+    //Update DSPs with parameters values
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    //compressor.setAttack(attack->get());
-    //compressor.setRelease(release->get());
-    //compressor.setThreshold(threshold->get());
-    //compressor.setRatio(ratio->getCurrentChoiceName().getFloatValue());
-
-
-    //auto block = juce::dsp::AudioBlock<float>(buffer);
-    //auto context = juce::dsp::ProcessContextReplacing<float>(block);
-
-    //context.isBypassed = bypassed->get();
-
-    //compressor.process(context);
-
-
-    //Loooping compressor bands
+       //Loooping compressor bands
     for( auto& compressor : compressors)
     compressor.updateCompressorSettings();
+
+    //Process input gain
+    inputGain.setGainDecibels(inputGainParam->get());
+    outputGain.setGainDecibels(outputGainParam->get());
+
+    applyGain(buffer, inputGain);
 
 
     //copying buffers!! the buffer is the audio FROM soundcard
@@ -302,63 +309,23 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     auto BasscutoffFreq = BassCrossover->get();
     LP1.setCutoffFrequency(BasscutoffFreq);
     HP1.setCutoffFrequency(BasscutoffFreq);
-    invAP1.setCutoffFrequency(BasscutoffFreq);  // FOr testing first crossover
-    invAP4.setCutoffFrequency(BasscutoffFreq);
-  
-    
-
+   
     auto MastercutoffFreq = MasterCrossover->get();
-    //invAP4.setCutoffFrequency(MastercutoffFreq);
-
-    
-  //  LP2.setCutoffFrequency(MastercutoffFreq);
-  //  HP2.setCutoffFrequency(MastercutoffFreq);
-
+ 
     auto LowcutoffFreq = LowCrossover->get();
     AP2.setCutoffFrequency(LowcutoffFreq);
     LP2.setCutoffFrequency(LowcutoffFreq);
     HP2.setCutoffFrequency(LowcutoffFreq);
-    //invAP1.setCutoffFrequency(LowcutoffFreq);  // FOr testing first crossover
-    //invAP4.setCutoffFrequency(LowcutoffFreq);
-    //invAP1.setCutoffFrequency(LowcutoffFreq);
-    //LP1.setCutoffFrequency(LowcutoffFreq);
-    //HP1.setCutoffFrequency(LowcutoffFreq);
-
-
+   
    auto LowMidcutoffFreq = LowMidCrossover->get();
-  
-   //HP2.setCutoffFrequency(LowMidcutoffFreq);
-   // LP1.setCutoffFrequency(LowMidcutoffFreq);
-   // HP1.setCutoffFrequency(LowMidcutoffFreq);
-   //AP2.setCutoffFrequency(LowMidcutoffFreq);
-   //AP3.setCutoffFrequency(LowMidcutoffFreq);
-   // //AP5.setCutoffFrequency(LowMidcutoffFreq);
-   // //AP4.setCutoffFrequency(LowMidcutoffFreq);
-   // // invAP1.setCutoffFrequency(LowMidcutoffFreq);
-
+ 
    auto MidHighcutoffFreq = MidHighCrossover->get();
-    //LP3.setCutoffFrequency(MidHighcutoffFreq);
-    //HP3.setCutoffFrequency(MidHighcutoffFreq);
-   //AP3.setCutoffFrequency(MidHighcutoffFreq);
-   // //AP3.setCutoffFrequency(MidHighcutoffFreq);
-   // //AP4.setCutoffFrequency(MidHighcutoffFreq);
-   // //AP5.setCutoffFrequency(MidHighcutoffFreq);
-   // //AP6.setCutoffFrequency(MidHighcutoffFreq);
-   // //invAP2.setCutoffFrequency(MidHighcutoffFreq);
-
-   // 
+   
    auto HighcutoffFreq = HighCrossover->get();
    AP3.setCutoffFrequency(HighcutoffFreq);
    LP3.setCutoffFrequency(HighcutoffFreq);
    HP3.setCutoffFrequency(HighcutoffFreq);
    
-   //// AP3.setCutoffFrequency(HighcutoffFreq);
-   //invAP4.setCutoffFrequency(HighcutoffFreq);
-   // LP3.setCutoffFrequency(HighcutoffFreq);
-   // HP3.setCutoffFrequency(HighcutoffFreq);
-    
-    //invAP3.setCutoffFrequency(HighcutoffFreq); //after this we need to create filters biffers and context to work  
-
     //Creating blocks and contexts for the filters. One buffer of audio created FOUR BAND output buffers to be processed
     auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
     auto fb1Block = juce::dsp::AudioBlock<float>(filterBuffers[1]);
@@ -396,117 +363,94 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     LP3.process(fb3Ctx);
     HP3.process(fb5Ctx);
     
-    //AP2.process(fb0Ctx);
-
-    //HP1.process(fb1Ctx);
-   // filterBuffers[2] = filterBuffers[1];
-    //LP2.process(fb0Ctx);
-    
-
-    ////Band1 - Low
-    //LP1.process(fb0Ctx);
-    //HP1.process(fb1Ctx);
-    //LP2.process(fb0Ctx);
-   // //AP2.process(fb0Ctx);
-   //// AP4.process(fb0Ctx);
-   // 
-   // 
-   // ////we needt o filter HP1 to be able to split it to other bands
-   // HP1.process(fb1Ctx);
-   // 
-   // //// copying output of HP1 to others filters...
-   // filterBuffers[2] = filterBuffers[1];
-   // filterBuffers[3] = filterBuffers[1];
-
-   // //Band2 - LowMid
-   //// AP4.process(fb1Ctx); 
-   // LP2.process(fb1Ctx);
-   // AP5.process(fb1Ctx);
-   // 
   
-   // ////Band3 - MidHigh
-   // //AP3.process(fb2Ctx);
-   // HP2.process(fb2Ctx);
-   // LP3.process(fb2Ctx);
+auto invAPBlock = juce::dsp::AudioBlock<float>(invAPBuffer);
+auto invAPCtx = juce::dsp::ProcessContextReplacing<float>(invAPBlock);
 
-   // ////Band4 - High
-   // AP3.process(fb3Ctx);
-   // AP6.process(fb3Ctx);
-   // HP3.process(fb3Ctx);
-   // 
-   // 
-   //
-    
-    
+invAP1.process(invAPCtx);
+invAP4.process(invAPCtx);
+//invAP3.process(invAPCtx);
 
-    auto invAPBlock = juce::dsp::AudioBlock<float>(invAPBuffer);
-    auto invAPCtx = juce::dsp::ProcessContextReplacing<float>(invAPBlock);
+//Processing compressors after filters - looping
+//for (size_t i = 0; i < filterBuffers.size(); ++i)
+//{
+//    compressors[i].process(filterBuffers[i]);
+//}
+LowBandComp.process(filterBuffers[2]);
+LowMidBandComp.process(filterBuffers[4]);
+MidHighBandComp.process(filterBuffers[3]);
+HighBandComp.process(filterBuffers[5]);
 
-    invAP1.process(invAPCtx);
-    invAP4.process(invAPCtx);
-    //invAP3.process(invAPCtx);
+filterBuffers[0] = filterBuffers[2];
+filterBuffers[1] = filterBuffers[4];
+filterBuffers[2] = filterBuffers[3];
+filterBuffers[3] = filterBuffers[5];
 
-    //Processing compressors after filters - looping
-    //for (size_t i = 0; i < filterBuffers.size(); ++i)
-    //{
-    //    compressors[i].process(filterBuffers[i]);
-    //}
-    LowBandComp.process(filterBuffers[2]);
-    LowMidBandComp.process(filterBuffers[4]);
-    MidHighBandComp.process(filterBuffers[3]);
-    HighBandComp.process(filterBuffers[5]);
+//Caching details of the input buffers
+auto numSamples = buffer.getNumSamples();
+auto numChannels = buffer.getNumChannels();
 
-    //Caching details of the input buffers
-    auto numSamples = buffer.getNumSamples();
-    auto numChannels = buffer.getNumChannels();
+//Cleaning buffers before adding into filters
+buffer.clear();
 
-    //////IF the compressor is bypassed dont clear, leave the buffer / testing
-    //if (compressor.bypassed->get())
-    //    return;
-
-    //Cleaning buffers before adding into filters
-    buffer.clear();
-
-    //Each channel of filter buffer needs to be copied back to input buffer
-    auto addFilterBand = [nc = numChannels, ns = numSamples](auto& inputBuffer, const auto& source)  //(goes to, copy from)
+//Each channel of filter buffer needs to be copied back to input buffer
+auto addFilterBand = [nc = numChannels, ns = numSamples](auto& inputBuffer, const auto& source)  //(goes to, copy from)
+{
+    for (auto i = 0; i < nc; ++i) //loop thru all the channel of the input buffer and copy from the source buffer into that
     {
-        for (auto i = 0; i < nc; ++i) //loop thru all the channel of the input buffer and copy from the source buffer into that
-        {
-         inputBuffer.addFrom(i, 0, source, i, 0, ns);
-        }
-    };
+        inputBuffer.addFrom(i, 0, source, i, 0, ns);
+    }
+};
 
-    auto bandsAreSoloed = false;
-    for (auto& comp : compressors)
+auto bandsAreSoloed = false;
+for (auto& comp : compressors)
+{
+    if (comp.solo->get())
     {
+        bandsAreSoloed = true;
+        break;
+    }
+}
+
+// filters summing  
+ //addFilterBand(buffer, filterBuffers[0]); //BASS
+ //addFilterBand(buffer, filterBuffers[1]); //MASTER
+//addFilterBand(buffer, filterBuffers[2]);  //LOW
+//addFilterBand(buffer, filterBuffers[4]); //MIDLOW
+//addFilterBand(buffer, filterBuffers[3]);  //MIDHIGH
+//addFilterBand(buffer, filterBuffers[5]); //HIGH
+//addFilterBand(buffer, filterBuffers[3]);
+
+//Bands soloing loop
+
+if (bandsAreSoloed)
+{
+    for (size_t i = 0; i < compressors.size(); ++i)
+    {
+        auto& comp = compressors[i];
         if (comp.solo->get())
         {
-            bandsAreSoloed = true;
-            break;
+            addFilterBand(buffer, filterBuffers[i]);
         }
+
+    }
+}
+
+else
+{
+    for (size_t i = 0; i < compressors.size(); ++i)
+    {
+    auto& comp = compressors[i];
+        if (! comp.mute->get())
+        {
+            addFilterBand(buffer, filterBuffers[i]);
+        }
+
     }
 
-    // filters summing  
-     //addFilterBand(buffer, filterBuffers[0]); //BASS
-     //addFilterBand(buffer, filterBuffers[1]); //MASTER
-    addFilterBand(buffer, filterBuffers[2]);  //LOW
-    addFilterBand(buffer, filterBuffers[4]); //MIDLOW
-    addFilterBand(buffer, filterBuffers[3]);  //MIDHIGH
-    addFilterBand(buffer, filterBuffers[5]); //HIGH
-    //addFilterBand(buffer, filterBuffers[3]);
+    applyGain(buffer, outputGain);
+}
 
-    if (bandsAreSoloed)
-    {for(size_t i=0) }
-
-    //Testing filter linearity inverting the ALLpass filter to zero the audio
-   /* if (compressor.bypassed->get())
-    {
-        for (auto ch = 0; ch < numChannels; ++ch)
-        {
-            juce::FloatVectorOperations::multiply(invAPBuffer.getWritePointer(ch), -1.f, numSamples);
-       }
-        addFilterBand(buffer, invAPBuffer);
-    }*/
 }
 
 //==============================================================================
@@ -517,8 +461,8 @@ bool SimpleMBCompAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* SimpleMBCompAudioProcessor::createEditor()
 {
- //   return new SimpleMBCompAudioProcessorEditor (*this);
-      return new juce::GenericAudioProcessorEditor (*this);
+    return new SimpleMBCompAudioProcessorEditor (*this);
+ //     return new juce::GenericAudioProcessorEditor (*this);
 }
 
 //==============================================================================
@@ -550,13 +494,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleMBCompAudioProcessor::
     using namespace Params;
     const auto& params = GetParams();
 
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_Low_Band), params.at(Names::Threshold_Low_Band), NormalisableRange<float>(-80, 12, 1, 1), 0));
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_Low_Mid_Band), params.at(Names::Threshold_Low_Mid_Band), NormalisableRange<float>(-80, 12, 1, 1), 0));
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_Mid_High_Band), params.at(Names::Threshold_Mid_High_Band), NormalisableRange<float>(-80, 12, 1, 1), 0));
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_High_Band), params.at(Names::Threshold_High_Band), NormalisableRange<float>(-80, 12, 1, 1), 0));
+    auto gainRange = NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f);
+
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Gain_In), params.at(Names::Gain_In), gainRange, 0));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Gain_Out), params.at(Names::Gain_Out), gainRange, 0));
+
+    //All the threshold uses the same normalisablerange, so we can DRY them all into this line below
+    auto thresholdRange = NormalisableRange<float>(-80, 12, 1, 1);
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_Low_Band), params.at(Names::Threshold_Low_Band), thresholdRange, 0));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_Low_Mid_Band), params.at(Names::Threshold_Low_Mid_Band), thresholdRange, 0));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_Mid_High_Band), params.at(Names::Threshold_Mid_High_Band), thresholdRange, 0));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_High_Band), params.at(Names::Threshold_High_Band), thresholdRange, 0));
 
     auto attackReleaseRange = NormalisableRange<float>(5, 500, 1, 1);
-
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Attack_Low_Band), params.at(Names::Attack_Low_Band), attackReleaseRange, 50));
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Attack_Low_Mid_Band), params.at(Names::Attack_Low_Mid_Band), attackReleaseRange, 50));
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Attack_Mid_High_Band), params.at(Names::Attack_Mid_High_Band), attackReleaseRange, 50));

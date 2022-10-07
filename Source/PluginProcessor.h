@@ -14,18 +14,35 @@
     2)create parameters to control where this split happens > DONE
     3)prove that splitting into 4 bands produces no audible artifacts > DONE
     4) create audio parameters for the 4 compressor bands. Need to be inside EACH band  >DONE
-    5) add 3 remaining compressors
-    6) add abillity to mute/solo/bypass each compressor
-    7) add input and output gain to offset changes in output level
-    8) clean up anything that needs
+    5) add 3 remaining compressors >DONE
+    6) add abillity to mute/solo/bypass each compressor > DONE
+    7) add input and output gain to offset changes in output level > DONE
+    8) clean up anything that needs cleaning > DONE
+
+    GUI ROADMAP
+    1)GLobal controls(xovers,gain slilders)
+    2)Main band controls(attack, release, threshold, ratio)
+    3) add solo/mute/bypass buttons
+    4) Band Select
+    5) Band select buttons reflect the solo/mute/bypass state
+    6)Sliders design
+    7)spectrum analysers
+    8)data structure for spectrum analysers
+    9)Fifo usage in pluginProcessor::processBlock
+    10) implementation of the analyzer nrendering pre-compupted paths
+    11)Drawing crossovers on top of the analyzer plot
+    12)drawing gain reduction meters
+    13) analyzer bypass button
+    14) Global bypass button
+
     */
 
 #include <JuceHeader.h>
 
 namespace Params
 {
-enum Names
-{       
+    enum Names
+    {
         Bass_Crossover_Freq,
         Master_Crossover_Freq,
         Low_Crossover_Freq,
@@ -53,11 +70,25 @@ enum Names
         Ratio_Mid_High_Band,
         Ratio_High_Band,
 
-        
         Bypassed_Low_Band,
         Bypassed_Low_Mid_Band,
         Bypassed_Mid_High_Band,
         Bypassed_High_Band,
+
+        Mute_Low_Band,
+        Mute_Low_Mid_Band,
+        Mute_Mid_High_Band,
+        Mute_High_Band,
+
+        Solo_Low_Band,
+        Solo_Low_Mid_Band,
+        Solo_Mid_High_Band,
+        Solo_High_Band,
+
+        Gain_In,
+        Gain_Out
+
+
     };
 inline const std::map<Names, juce::String>& GetParams()
 {
@@ -88,8 +119,19 @@ inline const std::map<Names, juce::String>& GetParams()
     {Bypassed_Low_Band, "Bypassed Low Band"},
     {Bypassed_Low_Mid_Band, "Bypassed Low Mid Band"},
     {Bypassed_Mid_High_Band, "Bypassed Mid High Band"},
-    {Bypassed_High_Band, "Bypassed_High_Band"},
+    {Bypassed_High_Band, "Bypassed High Band"},
+    {Mute_Low_Band, "Mute Low Band" },
+    {Mute_Low_Mid_Band, "Mute Low Mid Band"},
+    {Mute_Mid_High_Band, "Mute Mid High Band"},
+    {Mute_High_Band, "Mute High Band"},
+    {Solo_Low_Band, "Solo Low Band" },
+    {Solo_Low_Mid_Band, "Solo Low Mid Band"},
+    {Solo_Mid_High_Band, "Solo Mid High Band"},
+    {Solo_High_Band, "Solo High Band"},
+    {Gain_In,"Gain In"},
+    {Gain_Out, "Gain Out"}
     };
+
     return params;
 }
 }
@@ -103,6 +145,8 @@ struct CompressorBand
     juce::AudioParameterFloat* threshold{ nullptr };
     juce::AudioParameterChoice* ratio{ nullptr };
     juce::AudioParameterBool* bypassed{ nullptr };
+    juce::AudioParameterBool* mute{ nullptr };
+    juce::AudioParameterBool* solo{ nullptr };
 
     void prepare(const juce::dsp::ProcessSpec& spec)
     {
@@ -240,6 +284,21 @@ private:
 
     // 4 (FOUR bands) buffer creation for filters (all audio spectrum to each filter!!!)
         std::array<juce::AudioBuffer<float>,10> filterBuffers; 
+
+    //Declaring Gains
+        juce::dsp::Gain<float> inputGain, outputGain;
+        juce::AudioParameterFloat* inputGainParam{ nullptr };
+        juce::AudioParameterFloat* outputGainParam{ nullptr };
+
+
+        //Apllying a helper function using a template that figures out the correct functions
+        template<typename T, typename U>
+        void applyGain(T& buffer, U& gain)
+        {
+            auto block = juce::dsp::AudioBlock<float>(buffer);
+            auto ctx = juce::dsp::ProcessContextReplacing<float>(block);
+            gain.process(ctx);
+        }
 
 
 
