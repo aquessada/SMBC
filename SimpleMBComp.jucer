@@ -14,6 +14,19 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="rAwjCP" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
+    <FILE id="MNShpi" name="CustomButtons.cpp" compile="1" resource="0"
+          file="Source/CustomButtons.cpp"/>
+    <FILE id="uzqdQ0" name="CustomButtons.h" compile="0" resource="0" file="Source/CustomButtons.h"/>
+    <FILE id="xNbMqj" name="LookAndFeel.cpp" compile="1" resource="0" file="Source/LookAndFeel.cpp"/>
+    <FILE id="GawrpK" name="LookAndFeel.h" compile="0" resource="0" file="Source/LookAndFeel.h"/>
+    <FILE id="tapOUH" name="RotarySliderWithLabels.cpp" compile="1" resource="0"
+          file="Source/RotarySliderWithLabels.cpp"/>
+    <FILE id="gLqtIC" name="RotarySliderWithLabels.h" compile="0" resource="0"
+          file="Source/RotarySliderWithLabels.h"/>
+    <FILE id="cVW709" name="UtilityComponents.cpp" compile="1" resource="0"
+          file="Source/UtilityComponents.cpp"/>
+    <FILE id="yuUGoi" name="UtilityComponents.h" compile="0" resource="0"
+          file="Source/UtilityComponents.h"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
