@@ -14,15 +14,31 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="rAwjCP" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
+    <FILE id="G5c40W" name="CompressorBand.cpp" compile="1" resource="0"
+          file="Source/CompressorBand.cpp"/>
+    <FILE id="XQ2WuO" name="CompressorBand.h" compile="0" resource="0"
+          file="Source/CompressorBand.h"/>
+    <FILE id="f0sIrD" name="CompressorBandControls.cpp" compile="1" resource="0"
+          file="Source/CompressorBandControls.cpp"/>
+    <FILE id="QyXbr1" name="CompressorBandControls.h" compile="0" resource="0"
+          file="Source/CompressorBandControls.h"/>
     <FILE id="MNShpi" name="CustomButtons.cpp" compile="1" resource="0"
           file="Source/CustomButtons.cpp"/>
     <FILE id="uzqdQ0" name="CustomButtons.h" compile="0" resource="0" file="Source/CustomButtons.h"/>
+    <FILE id="tRqW2b" name="GlobalControls.cpp" compile="1" resource="0"
+          file="Source/GlobalControls.cpp"/>
+    <FILE id="cBwWQD" name="GlobalControls.h" compile="0" resource="0"
+          file="Source/GlobalControls.h"/>
     <FILE id="xNbMqj" name="LookAndFeel.cpp" compile="1" resource="0" file="Source/LookAndFeel.cpp"/>
     <FILE id="GawrpK" name="LookAndFeel.h" compile="0" resource="0" file="Source/LookAndFeel.h"/>
+    <FILE id="NhZsgW" name="Params.cpp" compile="1" resource="0" file="Source/Params.cpp"/>
+    <FILE id="Y6hAWM" name="Params.h" compile="0" resource="0" file="Source/Params.h"/>
     <FILE id="tapOUH" name="RotarySliderWithLabels.cpp" compile="1" resource="0"
           file="Source/RotarySliderWithLabels.cpp"/>
     <FILE id="gLqtIC" name="RotarySliderWithLabels.h" compile="0" resource="0"
           file="Source/RotarySliderWithLabels.h"/>
+    <FILE id="HAdAGi" name="Utilities.cpp" compile="1" resource="0" file="Source/Utilities.cpp"/>
+    <FILE id="cvwvm5" name="Utilities.h" compile="0" resource="0" file="Source/Utilities.h"/>
     <FILE id="cVW709" name="UtilityComponents.cpp" compile="1" resource="0"
           file="Source/UtilityComponents.cpp"/>
     <FILE id="yuUGoi" name="UtilityComponents.h" compile="0" resource="0"

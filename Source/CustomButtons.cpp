@@ -24,20 +24,7 @@ void AnalyzerButton::resized()
 
     for (auto x = insetRect.getX() + 1; x < insetRect.getRight(); x += 2)
     {
-
-
-
-
-
-
-
         randomPath.lineTo(x,
-
-
-
-
-
             insetRect.getY() + insetRect.getHeight() * r.nextFloat());
-
     }
 }
