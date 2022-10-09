@@ -12,6 +12,7 @@
 #include "GUI/Utilities.h"
 #include "DSP/Params.h"
 
+
 CompressorBandControls::CompressorBandControls(juce::AudioProcessorValueTreeState& apv) :
     apvts(apv),
     attackSlider(nullptr, "ms", "ATTACK"),
@@ -29,8 +30,16 @@ CompressorBandControls::CompressorBandControls(juce::AudioProcessorValueTreeStat
     muteButton.addListener(this);
 
     bypassButton.setName("X");
+    bypassButton.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::yellow);
+    bypassButton.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
+
     soloButton.setName("S");
+    soloButton.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::limegreen);
+    soloButton.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
+
     muteButton.setName("M");
+    muteButton.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::red);
+    muteButton.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
 
     addAndMakeVisible(bypassButton);
     addAndMakeVisible(soloButton);
@@ -41,9 +50,21 @@ CompressorBandControls::CompressorBandControls(juce::AudioProcessorValueTreeStat
     makeAttachmentHelper(muteButtonAttachment, Names::Mute_Low_Mid_Band, muteButton);*/
 
     lowBand.setName("Low");
-    lowMidBand.setName("Low-Mid");
-    midHighBand.setName("Mid_High");
-    highBand.setName("High");
+    lowBand.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::grey);
+    lowBand.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
+
+    lowMidBand.setName("Low-Mid"); 
+    lowMidBand.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::grey);
+    lowMidBand.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
+
+    midHighBand.setName("Mid_High"); 
+    midHighBand.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::grey);
+    midHighBand.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
+
+   highBand.setName("High"); 
+   highBand.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::grey);
+   highBand.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
+
     //grouping these buttons togheter so when you select one the others disappear
     lowBand.setRadioGroupId(1);
     lowMidBand.setRadioGroupId(1);
@@ -66,6 +87,8 @@ CompressorBandControls::CompressorBandControls(juce::AudioProcessorValueTreeStat
     lowBand.setToggleState(true, juce::NotificationType::dontSendNotification);
 
     updateAttachments();
+    updateSliderEnablements();
+    updateBandSelectButtonStates();
 
     addAndMakeVisible(lowBand);
     addAndMakeVisible(lowMidBand);
@@ -102,33 +125,33 @@ void CompressorBandControls::resized()
 
         return flexBox;
     };
-    //call lambdas now for buttons
-    auto bandButtonControlBox = createBandButtonControlBox({ &bypassButton, &soloButton, &muteButton });
-    auto bandSelectControlBox = createBandButtonControlBox({ &lowBand, &lowMidBand, &midHighBand, &highBand });
+//call lambdas now for buttons
+auto bandButtonControlBox = createBandButtonControlBox({ &bypassButton, &soloButton, &muteButton });
+auto bandSelectControlBox = createBandButtonControlBox({ &lowBand, &lowMidBand, &midHighBand, &highBand });
 
-    FlexBox flexBox;
-    flexBox.flexDirection = FlexBox::Direction::row;
-    flexBox.flexWrap = FlexBox::Wrap::noWrap;
+FlexBox flexBox;
+flexBox.flexDirection = FlexBox::Direction::row;
+flexBox.flexWrap = FlexBox::Wrap::noWrap;
 
-    auto spacer = FlexItem().withWidth(4);
-    auto endCap = FlexItem().withWidth(6);
+auto spacer = FlexItem().withWidth(4);
+auto endCap = FlexItem().withWidth(6);
 
-    //flexBox.items.add(endCap);
-    flexBox.items.add(spacer);
-    flexBox.items.add(FlexItem(bandSelectControlBox).withWidth(60));
-    flexBox.items.add(spacer);
-    flexBox.items.add(FlexItem(attackSlider).withFlex(1.f));
-    flexBox.items.add(spacer);
-    flexBox.items.add(FlexItem(releaseSlider).withFlex(1.f));
-    flexBox.items.add(spacer);
-    flexBox.items.add(FlexItem(thresholdSlider).withFlex(1.f));
-    flexBox.items.add(spacer);
-    flexBox.items.add(FlexItem(ratioSlider).withFlex(1.f));
-    //flexBox.items.add(endCap);
-    flexBox.items.add(spacer);
-    flexBox.items.add(FlexItem(bandButtonControlBox).withWidth(30));
+//flexBox.items.add(endCap);
+flexBox.items.add(spacer);
+flexBox.items.add(FlexItem(bandSelectControlBox).withWidth(60));
+flexBox.items.add(spacer);
+flexBox.items.add(FlexItem(attackSlider).withFlex(1.f));
+flexBox.items.add(spacer);
+flexBox.items.add(FlexItem(releaseSlider).withFlex(1.f));
+flexBox.items.add(spacer);
+flexBox.items.add(FlexItem(thresholdSlider).withFlex(1.f));
+flexBox.items.add(spacer);
+flexBox.items.add(FlexItem(ratioSlider).withFlex(1.f));
+//flexBox.items.add(endCap);
+flexBox.items.add(spacer);
+flexBox.items.add(FlexItem(bandButtonControlBox).withWidth(30));
 
-    flexBox.performLayout(bounds);
+flexBox.performLayout(bounds);
 }
 
 void CompressorBandControls::paint(juce::Graphics& g)
@@ -141,6 +164,82 @@ void CompressorBandControls::buttonClicked(juce::Button* button)
 {
     updateSliderEnablements();
     updateSoloMuteBypassToggleStates(*button);
+    updateActiveBandFillColors(*button);
+}
+
+void CompressorBandControls::updateActiveBandFillColors(juce::Button& clickedButton)
+{
+    jassert(activeBand != nullptr);
+    DBG("active band : " << activeBand->getName());
+    //if the button is off
+    if (clickedButton.getToggleState() == false)
+    {
+        resetActiveBandColors();
+    }
+    else
+    {
+        refreshBandButtonColors(*activeBand, clickedButton);
+    }
+}
+
+void CompressorBandControls::refreshBandButtonColors(juce::Button& band, juce::Button& colorSource)
+{
+    band.setColour(juce::TextButton::ColourIds::buttonOnColourId, colorSource.findColour(juce::TextButton::ColourIds::buttonOnColourId));
+    band.setColour(juce::TextButton::ColourIds::buttonColourId, colorSource.findColour(juce::TextButton::ColourIds::buttonOnColourId));
+    band.repaint();
+}
+
+void CompressorBandControls::resetActiveBandColors()
+{
+    activeBand->setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::grey);
+    activeBand->setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
+    activeBand->repaint();
+}
+
+void CompressorBandControls::updateBandSelectButtonStates()
+{//clear the state of the parameters if is on and set band color accordingly
+    using namespace Params;
+    std::vector<std::array<Names, 4>> paramsToCheck
+
+    {
+        {Names::Solo_Low_Band, Names::Mute_Low_Band, Names::Bypassed_Low_Band},
+        {Names::Solo_Low_Mid_Band, Names::Mute_Low_Mid_Band, Names::Bypassed_Low_Mid_Band},
+        {Names::Solo_Mid_High_Band, Names::Mute_Mid_High_Band, Names::Bypassed_Mid_High_Band},
+        {Names::Solo_High_Band, Names::Mute_High_Band, Names::Bypassed_High_Band}
+    };
+
+    const auto& params = GetParams();
+    auto paramHelper = [&params, this](const auto& name)
+    {
+        return dynamic_cast<juce::AudioParameterBool*>(&getParam(apvts, params, name));
+    };
+
+    for (size_t i = 0; i < paramsToCheck.size(); ++i)
+    {
+        auto& list = paramsToCheck[i];
+
+        auto* bandButton = (i == 0) ? &lowBand :
+            (i == 1) ? &lowMidBand :
+            (i == 2) ? &midHighBand :
+                          &highBand;
+
+        if (auto* solo = paramHelper(list[0]);
+            solo->get())
+        {
+            refreshBandButtonColors(*bandButton, soloButton);
+        }
+        else if (auto* mute = paramHelper(list[1]);
+            mute->get())
+        {
+            refreshBandButtonColors(*bandButton, muteButton);
+        }
+        else if (auto* byp = paramHelper(list[2]); byp->get())
+        {
+            refreshBandButtonColors(*bandButton, bypassButton);
+        }
+
+        
+    }
 }
 
 void CompressorBandControls::updateSliderEnablements()
@@ -210,6 +309,9 @@ void CompressorBandControls::updateAttachments()
                     Solo_Low_Band,
                     Bypassed_Low_Band
         };
+
+        //using the created pointer for the color state
+        activeBand = &lowBand;
         break;
     }
 
@@ -225,6 +327,7 @@ void CompressorBandControls::updateAttachments()
                     Solo_Low_Mid_Band,
                     Bypassed_Low_Mid_Band
         };
+        activeBand = &lowMidBand;
         break;
     }
 
@@ -240,6 +343,7 @@ void CompressorBandControls::updateAttachments()
                     Solo_Mid_High_Band,
                     Bypassed_Mid_High_Band
         };
+        activeBand = &midHighBand;
         break;
     }
 
@@ -255,6 +359,7 @@ void CompressorBandControls::updateAttachments()
                     Solo_High_Band,
                     Bypassed_High_Band
         };
+        activeBand = &highBand;
         break;
     }
     }
