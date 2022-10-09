@@ -8,9 +8,9 @@
   ==============================================================================
 */
 
-#include "GlobalControls.h"
-#include 
-#include "Utilities.h"
+#include "GUI/GlobalControls.h"
+#include "DSP/Params.h"
+#include "GUI/Utilities.h"
 
 GlobalControls::GlobalControls(juce::AudioProcessorValueTreeState& apvts)
 {
