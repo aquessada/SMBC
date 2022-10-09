@@ -9,28 +9,11 @@
 #pragma once
 
 #include <JuceHeader.h>
-
-//==============================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#include "PluginProcessor.h"
+#include "LookAndFeel.h"
+#include "GlobalControls.h"
+#include "CompressorBandControls.h"
+#include "UtilityComponents.h"
 /**
 */
 class SimpleMBCompAudioProcessorEditor : public juce::AudioProcessorEditor
@@ -53,12 +36,6 @@ private:
     GlobalControls globalControls{ audioProcessor.apvts };
     CompressorBandControls bandControls{ audioProcessor.apvts };
 
-
-
-
-
-
-
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SimpleMBCompAudioProcessorEditor)
 };
+//==============================================================================

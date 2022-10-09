@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "RotarySliderWithLabels.h"
 
 struct LookAndFeel : juce::LookAndFeel_V4
 {
