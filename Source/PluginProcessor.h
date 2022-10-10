@@ -20,15 +20,15 @@
     8) clean up anything that needs cleaning > DONE
 
     GUI ROADMAP
-    1)GLobal controls(xovers,gain slilders)
-    2)Main band controls(attack, release, threshold, ratio)
-    3) add solo/mute/bypass buttons
-    4) Band Select
-    5) Band select buttons reflect the solo/mute/bypass state
-    6)Sliders design
-    7)spectrum analysers
-    8)data structure for spectrum analysers
-    9)Fifo usage in pluginProcessor::processBlock
+    1)GLobal controls(xovers,gain slilders) DONE
+    2)Main band controls(attack, release, threshold, ratio)DONE
+    3) add solo/mute/bypass buttonsDONE
+    4) Band SelectDONE
+    5) Band select buttons reflect the solo/mute/bypass stateDONE
+    6)Sliders designDONE
+    7)spectrum analysersDONE
+    8)data structure for spectrum DONE
+    9)Fifo usage in pluginProcessor::processBlock -> FEED AUDIO TO sPECTRUM!!!
     10) implementation of the analyzer nrendering pre-compupted paths
     11)Drawing crossovers on top of the analyzer plot
     12)drawing gain reduction meters

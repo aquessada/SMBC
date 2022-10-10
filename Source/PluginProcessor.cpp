@@ -285,6 +285,8 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
+    updateState();
+
        //Loooping compressor bands
     for( auto& compressor : compressors)
     compressor.updateCompressorSettings();
