@@ -172,10 +172,10 @@ private:
             auto ctx = juce::dsp::ProcessContextReplacing<float>(block);
             gain.process(ctx);
         }
-
         void updateState();
 
         void splitBands(const juce::AudioBuffer<float>& inputBuffer);
+
         //==============================================================================
 
 

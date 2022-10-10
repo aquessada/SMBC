@@ -227,13 +227,15 @@ void SimpleMBCompAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     inputGain.setRampDurationSeconds(0.05); //50ms
     outputGain.setRampDurationSeconds(0.05); //50ms
 
-
- 
-    //prepare the buffers!!
+        //prepare the buffers!!
     for (auto& buffer : filterBuffers)
     {
         buffer.setSize(spec.numChannels, samplesPerBlock);
     }
+
+    //prepare FIFOsssssssssss
+    leftChannelFifo.prepare(samplesPerBlock);
+    rightChannelFifo.prepare(samplesPerBlock);
 }
 
 void SimpleMBCompAudioProcessor::releaseResources()
@@ -268,67 +270,52 @@ bool SimpleMBCompAudioProcessor::isBusesLayoutSupported (const BusesLayout& layo
 }
 #endif
 
-void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void SimpleMBCompAudioProcessor::updateState()
 {
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
+    //Loooping compressor bands
+for (auto& compressor : compressors)
+compressor.updateCompressorSettings();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
+//Updating filter cutoffs!!
+auto BasscutoffFreq = BassCrossover->get();
+LP1.setCutoffFrequency(BasscutoffFreq);
+HP1.setCutoffFrequency(BasscutoffFreq);
 
-    //Update DSPs with parameters values
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear(i, 0, buffer.getNumSamples());
+auto MastercutoffFreq = MasterCrossover->get();
 
-    updateState();
+auto LowcutoffFreq = LowCrossover->get();
+AP2.setCutoffFrequency(LowcutoffFreq);
+LP2.setCutoffFrequency(LowcutoffFreq);
+HP2.setCutoffFrequency(LowcutoffFreq);
 
-       //Loooping compressor bands
-    for( auto& compressor : compressors)
-    compressor.updateCompressorSettings();
+auto LowMidcutoffFreq = LowMidCrossover->get();
 
-    //Process input gain
-    inputGain.setGainDecibels(inputGainParam->get());
-    outputGain.setGainDecibels(outputGainParam->get());
+auto MidHighcutoffFreq = MidHighCrossover->get();
 
-    applyGain(buffer, inputGain);
+auto HighcutoffFreq = HighCrossover->get();
+AP3.setCutoffFrequency(HighcutoffFreq);
+LP3.setCutoffFrequency(HighcutoffFreq);
+HP3.setCutoffFrequency(HighcutoffFreq);
 
 
-    //copying buffers!! the buffer is the audio FROM soundcard
+
+//Process input gain
+inputGain.setGainDecibels(inputGainParam->get());
+outputGain.setGainDecibels(outputGainParam->get());
+}
+
+
+////Process input gain
+//inputGain.setGainDecibels(inputGainParam->get());
+//outputGain.setGainDecibels(outputGainParam->get());
+
+void SimpleMBCompAudioProcessor::splitBands(const juce::AudioBuffer<float>& inputBuffer)
+{
     for (auto& fb : filterBuffers)
     {
-        fb = buffer;
+        fb = inputBuffer;
     }
 
-    //Preparing the inverted testing filters
-    invAPBuffer = buffer;
-
-
-    //Updating filter cutoffs!!
-    auto BasscutoffFreq = BassCrossover->get();
-    LP1.setCutoffFrequency(BasscutoffFreq);
-    HP1.setCutoffFrequency(BasscutoffFreq);
-   
-    auto MastercutoffFreq = MasterCrossover->get();
- 
-    auto LowcutoffFreq = LowCrossover->get();
-    AP2.setCutoffFrequency(LowcutoffFreq);
-    LP2.setCutoffFrequency(LowcutoffFreq);
-    HP2.setCutoffFrequency(LowcutoffFreq);
-   
-   auto LowMidcutoffFreq = LowMidCrossover->get();
- 
-   auto MidHighcutoffFreq = MidHighCrossover->get();
-   
-   auto HighcutoffFreq = HighCrossover->get();
-   AP3.setCutoffFrequency(HighcutoffFreq);
-   LP3.setCutoffFrequency(HighcutoffFreq);
-   HP3.setCutoffFrequency(HighcutoffFreq);
-   
     //Creating blocks and contexts for the filters. One buffer of audio created FOUR BAND output buffers to be processed
     auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
     auto fb1Block = juce::dsp::AudioBlock<float>(filterBuffers[1]);
@@ -365,20 +352,37 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     //MIDHIGH and HIGH filtering
     LP3.process(fb3Ctx);
     HP3.process(fb5Ctx);
-    
+
+}
+
+void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    juce::ScopedNoDenormals noDenormals;
+    auto totalNumInputChannels = getTotalNumInputChannels();
+    auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+    // In case we have more outputs than inputs, this code clears any output
+    // channels that didn't contain input data, (because these aren't
+    // guaranteed to be empty - they may contain garbage).
+    // This is here to avoid people getting screaming feedback
+    // when they first compile a plugin, but obviously you don't need to keep
+    // this code if your algorithm always overwrites all the output channels.
+
+    //Update DSPs with parameters values
+    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear(i, 0, buffer.getNumSamples());
   
-auto invAPBlock = juce::dsp::AudioBlock<float>(invAPBuffer);
-auto invAPCtx = juce::dsp::ProcessContextReplacing<float>(invAPBlock);
+    updateState();
 
-invAP1.process(invAPCtx);
-invAP4.process(invAPCtx);
-//invAP3.process(invAPCtx);
+    //Lets send audio to channels fifo!!!!
+    leftChannelFifo.update(buffer);
+    rightChannelFifo.update(buffer);
 
-//Processing compressors after filters - looping
-//for (size_t i = 0; i < filterBuffers.size(); ++i)
-//{
-//    compressors[i].process(filterBuffers[i]);
-//}
+    applyGain(buffer, inputGain);
+
+    splitBands(buffer);
+
+ 
 LowBandComp.process(filterBuffers[2]);
 LowMidBandComp.process(filterBuffers[4]);
 MidHighBandComp.process(filterBuffers[3]);
