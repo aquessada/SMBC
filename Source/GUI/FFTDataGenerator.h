@@ -62,7 +62,7 @@ struct FFTDataGenerator
             max = juce::jmax(data, max);
         }
 
-        jassertfalse;
+       // jassertfalse;
 
         fftDataFifo.push(fftData);
     }
