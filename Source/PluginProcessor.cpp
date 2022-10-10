@@ -236,6 +236,14 @@ void SimpleMBCompAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     //prepare FIFOsssssssssss
     leftChannelFifo.prepare(samplesPerBlock);
     rightChannelFifo.prepare(samplesPerBlock);
+
+    //Prepare test signal
+    osc.initialise([](float x) {return std::sin(x); });
+    osc.prepare(spec);
+    //osc.setFrequency(400);
+    osc.setFrequency((getSampleRate() / (2 << FFTOrder::order2048) - 1) * 50);
+    gain.prepare(spec);
+    gain.setGainDecibels(-12.f);
 }
 
 void SimpleMBCompAudioProcessor::releaseResources()
@@ -271,6 +279,7 @@ bool SimpleMBCompAudioProcessor::isBusesLayoutSupported (const BusesLayout& layo
 #endif
 
 void SimpleMBCompAudioProcessor::updateState()
+
 {
     //Loooping compressor bands
 for (auto& compressor : compressors)
@@ -374,6 +383,16 @@ void SimpleMBCompAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
   
     updateState();
 
+    if (true)
+    {
+        buffer.clear();
+        auto block = juce::dsp::AudioBlock<float>(buffer);
+        auto ctx = juce::dsp::ProcessContextReplacing<float>(block);
+        osc.process(ctx);
+        
+        gain.setGainDecibels(JUCE_LIVE_CONSTANT(-12));
+        gain.process(ctx);
+    }
     //Lets send audio to channels fifo!!!!
     leftChannelFifo.update(buffer);
     rightChannelFifo.update(buffer);
