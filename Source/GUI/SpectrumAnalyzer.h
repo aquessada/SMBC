@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include <GUI/PathProducer.h>
+#include "GUI/PathProducer.h"
 
 struct SpectrumAnalyzer : juce::Component,
     juce::AudioProcessorParameter::Listener,

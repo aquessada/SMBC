@@ -173,9 +173,10 @@ private:
             gain.process(ctx);
         }
 
+        void updateState();
 
-
-
+        void splitBands(const juce::AudioBuffer<float>& inputBuffer);
+        //==============================================================================
 
 
     //==============================================================================
