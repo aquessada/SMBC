@@ -574,17 +574,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleMBCompAudioProcessor::
     layout.add(std::make_unique<AudioParameterBool>(params.at(Names::Solo_High_Band), params.at(Names::Solo_High_Band), false));
 
 
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Bass_Crossover_Freq), params.at(Names::Bass_Crossover_Freq), NormalisableRange<float>(20, 650, 1, 1), 650));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Bass_Crossover_Freq), params.at(Names::Bass_Crossover_Freq), NormalisableRange<float>(MIN_FREQUENCY, 650, 1, 1), 650));
     
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Master_Crossover_Freq), params.at(Names::Master_Crossover_Freq), NormalisableRange<float>(650, 20000, 1, 1), 650));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Master_Crossover_Freq), params.at(Names::Master_Crossover_Freq), NormalisableRange<float>(650, MAX_FREQUENCY, 1, 1), 650));
 
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Crossover_Freq), params.at(Names::Low_Crossover_Freq), NormalisableRange<float>(20, 130, 1, 1), 130));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Crossover_Freq), params.at(Names::Low_Crossover_Freq), NormalisableRange<float>(MIN_FREQUENCY, 130, 1, 1), 130));
 
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Mid_Crossover_Freq), params.at(Names::Low_Mid_Crossover_Freq), NormalisableRange<float>(130, 650, 1, 1), 130));
 
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Mid_High_Crossover_Freq), params.at(Names::Mid_High_Crossover_Freq), NormalisableRange<float>(650, 1600, 1, 1), 650));
 
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::High_Crossover_Freq), params.at(Names::High_Crossover_Freq), NormalisableRange<float>(1600, 20000, 1, 1), 1600));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::High_Crossover_Freq), params.at(Names::High_Crossover_Freq), NormalisableRange<float>(1600, MAX_FREQUENCY, 1, 1), 1600));
 
 
     return layout;
