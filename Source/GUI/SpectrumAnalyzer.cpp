@@ -10,6 +10,7 @@
 
 #include "SpectrumAnalyzer.h"
 #include "Utilities.h"
+#include "DSP/Params.h"
 
 
 
@@ -23,6 +24,24 @@ SpectrumAnalyzer::SpectrumAnalyzer(SimpleMBCompAudioProcessor& p) :
     {
         param->addListener(this);
     }
+
+    //initializa crossovrs drawings
+    using namespace Params;
+    const auto& paramNames = GetParams();
+    auto floatHelper = [&apvts = audioProcessor.apvts, &paramNames](auto& param, const auto& paramName)
+    {
+        param = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(paramNames.at(paramName)));
+        jassert(param != nullptr);
+    };
+
+    floatHelper(lowMidXoverParam, Names::Low_Mid_Crossover_Freq);
+    floatHelper(midHighXoverParam, Names::Mid_High_Crossover_Freq);
+    floatHelper(highXoverParam, Names::High_Crossover_Freq);
+
+    floatHelper(lowThresholdParam, Names::Threshold_Low_Band);
+    floatHelper(lowMidThresholdParam, Names::Threshold_Low_Mid_Band);
+    floatHelper(midHighThresholdParam, Names::Threshold_Mid_High_Band);
+    floatHelper(highThresholdParam, Names::Threshold_High_Band);
 
     startTimerHz(60);
 }
@@ -89,10 +108,54 @@ void SpectrumAnalyzer::paint(juce::Graphics& g)
 
    // g.fillPath(border);
 
+    drawCrossovers(g, bounds);
+
     drawTextLabels(g, bounds);
 
     /*g.setColour(Colours::orange);
     g.drawRoundedRectangle(getRenderArea(bounds).toFloat(), 4.f, 1.f);*/
+}
+
+void SpectrumAnalyzer::drawCrossovers(juce::Graphics& g, juce::Rectangle<int> bounds)
+{
+    using namespace juce;
+    bounds = getAnalysisArea(bounds);
+    const auto top = bounds.getY();
+    const auto bottom = bounds.getBottom();
+    const auto left = bounds.getX();
+    const auto right = bounds.getRight();
+
+    //Map frequency positions to vertical lines of corssovers
+    auto mapX = [left = bounds.getX(), width = bounds.getWidth()](float frequency)
+    {
+        auto normX = juce::mapFromLog10(frequency, MIN_FREQUENCY, MAX_FREQUENCY);
+        return left + width * normX;
+    };
+    //drawing crossovers
+    auto lowMidX = mapX(lowMidXoverParam->get());
+    g.setColour(Colours::orange);
+    g.drawVerticalLine(lowMidX, top, bottom);
+
+    auto midHighX = mapX(midHighXoverParam->get());
+    g.setColour(Colours::orange);
+    g.drawVerticalLine(midHighX, top, bottom);
+
+    auto HighX = mapX(highXoverParam->get());
+    g.setColour(Colours::orange);
+    g.drawVerticalLine(HighX, top, bottom);
+
+    //Create a lambda for corssovers horiz lines
+    auto mapY = [bottom, top](float db )
+    {
+        return jmap(db, NEGATIVE_INFINITY, MAX_DECIBELS, (float)bottom, (float)top);
+    };
+
+    g.setColour(Colours::yellow);
+    g.drawHorizontalLine(mapY(lowThresholdParam->get()), left, lowMidX);
+    g.drawHorizontalLine(mapY(lowMidThresholdParam->get()), lowMidX, midHighX);
+    g.drawHorizontalLine(mapY(midHighThresholdParam->get()), midHighX, HighX);
+    g.drawHorizontalLine(mapY(highThresholdParam->get()), HighX, right);
+
 }
 
 std::vector<float> SpectrumAnalyzer::getFrequencies()
