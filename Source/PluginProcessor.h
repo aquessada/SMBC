@@ -28,10 +28,10 @@
     6)Sliders designDONE
     7)spectrum analysersDONE
     8)data structure for spectrum DONE
-    9)Fifo usage in pluginProcessor::processBlock -> FEED AUDIO TO sPECTRUM!!!
-    10) implementation of the analyzer nrendering pre-compupted paths
-    11)Drawing crossovers on top of the analyzer plot
-    12)drawing gain reduction meters
+    9)Fifo usage in pluginProcessor::processBlock -> FEED AUDIO TO sPECTRUM!!! DONE
+    10) implementation of the analyzer nrendering pre-compupted paths DONE
+    11)Drawing crossovers on top of the analyzer plot  DONE
+    12)drawing gain reduction meters DONE
     13) analyzer bypass button
     14) Global bypass button
 
