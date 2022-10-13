@@ -19,8 +19,9 @@
 */
 
 
-class SimpleMBCompAudioProcessorEditor : public juce::AudioProcessorEditor
-{
+class SimpleMBCompAudioProcessorEditor : public juce::AudioProcessorEditor, juce::Timer
+
+    {
 public:
     SimpleMBCompAudioProcessorEditor(SimpleMBCompAudioProcessor&);
     ~SimpleMBCompAudioProcessorEditor() override;
@@ -28,6 +29,9 @@ public:
     //==============================================================================
     void paint(juce::Graphics&) override;
     void resized() override;
+
+    //to display RMS levels we need to inherit the timer to keep showing the the rms levels in each band
+    void timerCallback() override;
 
 private:
     LookAndFeel lnf;

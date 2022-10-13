@@ -25,6 +25,9 @@ SimpleMBCompAudioProcessorEditor::SimpleMBCompAudioProcessorEditor(SimpleMBCompA
     addAndMakeVisible(bandControls);
 
     setSize(600, 500);
+
+    //set timer construct for the rms level meters
+    startTimerHz(60);
 }
 
 SimpleMBCompAudioProcessorEditor::~SimpleMBCompAudioProcessorEditor()
@@ -59,3 +62,19 @@ void SimpleMBCompAudioProcessorEditor::resized()
 
     globalControls.setBounds(bounds);
 }
+
+void SimpleMBCompAudioProcessorEditor::timerCallback()
+{ 
+    std::vector<float> values
+    {
+        audioProcessor.LowBandComp.getRMSInputLevelDb(),
+        audioProcessor.LowBandComp.getRMSOutputLevelDb(),
+        audioProcessor.LowMidBandComp.getRMSInputLevelDb(),
+        audioProcessor.LowMidBandComp.getRMSOutputLevelDb(),
+        audioProcessor.MidHighBandComp.getRMSInputLevelDb(),
+        audioProcessor.MidHighBandComp.getRMSOutputLevelDb(),
+        audioProcessor.HighBandComp.getRMSInputLevelDb(),
+        audioProcessor.HighBandComp.getRMSOutputLevelDb()
+    };
+    analyzer.update(values);
+};

@@ -33,6 +33,9 @@ struct SpectrumAnalyzer : juce::Component,
     {
         shouldShowFFTAnalysis = enabled;
     }
+
+    void update(const std::vector<float>& values);
+
 private:
     SimpleMBCompAudioProcessor& audioProcessor;
 
@@ -49,7 +52,7 @@ private:
     //void updateChain();
 
     //void drawBackgroundGrid(juce::Graphics& g);
-    void drawBackgroundGrid(juce::Graphics& g, juce::Rectangle<int>);
+    void drawBackgroundGrid(juce::Graphics& g, juce::Rectangle<int> bounds);
     void drawTextLabels(juce::Graphics& g, juce::Rectangle<int> bounds);
 
     std::vector<float> getFrequencies();
@@ -74,4 +77,9 @@ private:
     juce::AudioParameterFloat* lowMidThresholdParam{ nullptr };
     juce::AudioParameterFloat* midHighThresholdParam{ nullptr };
     juce::AudioParameterFloat* highThresholdParam{ nullptr };
+
+    float lowBandGR{ 0.f };
+    float lowMidBandGR{ 0.f };
+    float midHighBandGR{ 0.f };
+    float highBandGR{ 0.f };
 };

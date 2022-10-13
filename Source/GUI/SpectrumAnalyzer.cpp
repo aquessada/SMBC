@@ -116,7 +116,7 @@ void SpectrumAnalyzer::paint(juce::Graphics& g)
     g.drawRoundedRectangle(getRenderArea(bounds).toFloat(), 4.f, 1.f);*/
 }
 
-void SpectrumAnalyzer::drawCrossovers(juce::Graphics& g, juce::Rectangle<int> bounds)
+void SpectrumAnalyzer::drawCrossovers(juce::Graphics &g, juce::Rectangle<int> bounds)
 {
     using namespace juce;
     bounds = getAnalysisArea(bounds);
@@ -137,11 +137,9 @@ void SpectrumAnalyzer::drawCrossovers(juce::Graphics& g, juce::Rectangle<int> bo
     g.drawVerticalLine(lowMidX, top, bottom);
 
     auto midHighX = mapX(midHighXoverParam->get());
-    g.setColour(Colours::orange);
     g.drawVerticalLine(midHighX, top, bottom);
 
     auto HighX = mapX(highXoverParam->get());
-    g.setColour(Colours::orange);
     g.drawVerticalLine(HighX, top, bottom);
 
     //Create a lambda for corssovers horiz lines
@@ -150,6 +148,30 @@ void SpectrumAnalyzer::drawCrossovers(juce::Graphics& g, juce::Rectangle<int> bo
         return jmap(db, NEGATIVE_INFINITY, MAX_DECIBELS, (float)bottom, (float)top);
     };
 
+    //coordinates to be used to indicated where the GR is
+    auto zeroDb = mapY(0.f);
+    g.setColour(Colours::hotpink.withAlpha(0.3f));
+
+    g.fillRect(Rectangle<float>::leftTopRightBottom(left,
+        zeroDb,
+        lowMidX,
+        mapY(lowBandGR)));
+
+    g.fillRect(Rectangle<float>::leftTopRightBottom(lowMidX,
+        zeroDb,
+        midHighX,
+        mapY(lowMidBandGR)));
+
+    g.fillRect(Rectangle<float>::leftTopRightBottom(midHighX,
+        zeroDb,
+        HighX,
+        mapY(midHighBandGR)));
+
+    g.fillRect(Rectangle<float>::leftTopRightBottom(HighX,
+        zeroDb,
+        right,
+        mapY(highBandGR)));
+
     g.setColour(Colours::yellow);
     g.drawHorizontalLine(mapY(lowThresholdParam->get()), left, lowMidX);
     g.drawHorizontalLine(mapY(lowMidThresholdParam->get()), lowMidX, midHighX);
@@ -157,6 +179,31 @@ void SpectrumAnalyzer::drawCrossovers(juce::Graphics& g, juce::Rectangle<int> bo
     g.drawHorizontalLine(mapY(highThresholdParam->get()), HighX, right);
 
 }
+
+void SpectrumAnalyzer::update(const std::vector<float> &values)
+{
+    jassert(values.size() == 8);
+
+    enum
+    {
+        LowBandIn,
+        LowBandOut,
+        LowMidBandIn,
+        LowMidBandOut,
+        MidHighBandIn,
+        MidHighBandOut,
+        HighBandIn,
+        HighBandOut
+    };
+    
+    lowBandGR = values[LowBandOut] - values[LowBandIn];
+    lowMidBandGR = values[LowMidBandOut] - values[LowMidBandIn];
+    midHighBandGR = values[MidHighBandOut] - values[MidHighBandIn];
+    highBandGR = values[HighBandOut] - values[HighBandIn];
+
+    repaint();
+
+};
 
 std::vector<float> SpectrumAnalyzer::getFrequencies()
 {
@@ -180,7 +227,7 @@ std::vector<float> SpectrumAnalyzer::getGains()
     // this auto creation
     std::vector<float> values;
     auto increment = MAX_DECIBELS; //12 dB steps
-    for (auto db = NEGATIVE_INFINITY; db < +MAX_DECIBELS; db += increment)
+    for (auto db = NEGATIVE_INFINITY; db <= MAX_DECIBELS; db += increment)
     {
         values.push_back(db);
     }
@@ -190,7 +237,7 @@ std::vector<float> SpectrumAnalyzer::getGains()
 
 }
 
-std::vector<float> SpectrumAnalyzer::getXs(const std::vector<float>& freqs, float left, float width)
+std::vector<float> SpectrumAnalyzer::getXs(const std::vector<float> &freqs, float left, float width)
 {
     std::vector<float> xs;
     for (auto f : freqs)
@@ -202,7 +249,7 @@ std::vector<float> SpectrumAnalyzer::getXs(const std::vector<float>& freqs, floa
     return xs;
 }
 
-void SpectrumAnalyzer::drawBackgroundGrid(juce::Graphics& g,                                            juce::Rectangle<int> bounds)
+void SpectrumAnalyzer::drawBackgroundGrid(juce::Graphics &g,                                            juce::Rectangle<int> bounds)
 {
     using namespace juce;
     auto freqs = getFrequencies();
@@ -235,7 +282,7 @@ void SpectrumAnalyzer::drawBackgroundGrid(juce::Graphics& g,                    
     }
 }
 
-void SpectrumAnalyzer::drawTextLabels(juce::Graphics& g, juce::Rectangle<int> bounds)
+void SpectrumAnalyzer::drawTextLabels(juce::Graphics &g, juce::Rectangle<int> bounds)
 {
     using namespace juce;
     g.setColour(Colours::lightgrey);

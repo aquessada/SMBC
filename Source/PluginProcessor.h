@@ -99,8 +99,6 @@ public:
     SingleChannelSampleFifo<BlockType> leftChannelFifo{ Channel::Left };
     SingleChannelSampleFifo<BlockType> rightChannelFifo{ Channel::Right };
 
-private:
-
     //juce::dsp::Compressor<float> compressor;
     //juce::AudioParameterFloat* attack{ nullptr };
     //juce::AudioParameterFloat* release{ nullptr };
@@ -113,6 +111,9 @@ private:
     CompressorBand& LowMidBandComp = compressors[1];
     CompressorBand& MidHighBandComp = compressors[2];
     CompressorBand& HighBandComp = compressors[3];
+
+
+private:
 
 
     using Filter = juce::dsp::LinkwitzRileyFilter<float>;
