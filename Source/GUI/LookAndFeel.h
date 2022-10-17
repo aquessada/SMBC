@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 #include "RotarySliderWithLabels.h"
 
-#define USE_LIVE_CONSTANT true
+#define USE_LIVE_CONSTANT false
 #if USE_LIVE_CONSTANT
 #define colorHelper(c) JUCE_LIVE_CONSTANT(c);
 #else
